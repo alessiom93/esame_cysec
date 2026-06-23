@@ -17,6 +17,7 @@
 14. [Esercizio 14: Configura iptables solo ssh da un ip e webserver](#14)
 15. [Esercizio 15: Configura iptables blocco traffico internet tranne webserver](#15)
 16. [Esercizio 16: Configura iptables solo ssh e webserver](#16)
+17. [17: Cheatsheet](#17)
 
 ## SSH
 vm: ip a (vedi IP inet)
@@ -295,5 +296,55 @@ sudo iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+```
+---
+---
+## 17
+Cheatsheet
+```
+## Appendice: Cheat Sheet e Note per Varianti d'Esame
+
+In questa sezione sono raccolte le logiche e i comandi "jolly" da utilizzare qualora il professore introduca varianti rispetto agli esercizi standard.
+
+### 1. Varianti su Sudoers (`/etc/sudoers.d/`)
+* **Consentire un intero percorso/sottocartella:** Se il prof chiede di far eseguire tutti i binari dentro una cartella specifica (es. `/usr/local/bin/`):
+  `studente ALL=(root) NOPASSWD: /usr/local/bin/*`
+* **Specificare utenti o gruppi diversi:** * Se la regola si applica a un gruppo anziché a un utente, usa il prefisso `%`: `%gruppo_esame ALL=(root) ...`
+  * Se la regola deve permettere di impersonare un utente specifico che non sia root (es. l'utente `postgres`): `studente ALL=(postgres) NOPASSWD: /usr/bin/psql`
+
+### 2. Varianti sulla ricerca File (`find`)
+Il comando `find` può essere modificato combinando diversi flag:
+* **Ricerca per permessi esatti vs minimi:** * `-perm 4000`: Cerca file che hanno *esattamente* solo il bit SUID.
+  * `-perm -4000`: Cerca file che hanno *almeno* il bit SUID attivo (consigliato per l'esame).
+* **Ricerca per Utente/Gruppo:** Se viene chiesto di cercare file critici appartenenti a un utente specifico:
+  `find / -user root -perm -o+w 2>/dev/null` (cerca file di root scrivibili da chiunque).
+* **Ricerca per modifica recente:** Se chiede di cercare file modificati negli ultimi 2 giorni nella home:
+  `find /home -mtime -2`
+
+### 3. Varianti su Modulo PAM e Password
+* **Modificare parametri specifici:** Ricorda il significato dei parametri di `pam_pwquality.so` per modificarli al volo:
+  * `minlen=X`: Lunghezza minima della password.
+  * `ucredit=-1`: Almeno una maiuscola (Upper). Se impostato a `-2`, ne richiede due.
+  * `lcredit=-1`: Almeno una minuscola (Lower).
+  * `dcredit=-1`: Almeno una cifra/numero (Digit).
+  * `ocredit=-1`: Almeno un carattere speciale/simbolo (Other).
+  * `difok=X`: Numero di caratteri che devono essere diversi rispetto alla vecchia password.
+
+### 4. Varianti su Systemd Service
+* **Cambiare la porta o l'eseguibile:** Se il prof vieta netcat o chiede un reverse stream con un altro tool (es. `socat`), basta modificare la direttiva `ExecStart=`.
+* **Verificare lo stato del servizio:** Se lo script non sembra funzionare durante i test della VM, i comandi di debug rapidi sono:
+  * `sudo systemctl status backdoor.service`
+  * `sudo journalctl -u backdoor.service -n 20 --no-pager` (mostra gli ultimi 20 log del servizio).
+
+### 5. Varianti su IPTables (Il blocco più critico)
+IPTables legge le regole dall'alto verso il basso. Se il prof chiede varianti, tieni a mente queste strutture:
+* **Abilitare il Ping (ICMP):** Spesso richiesto per verificare se la macchina risponde sulla rete.
+  `sudo iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT`
+* **Bloccare o limitare una specifica sottorete:** Se bisogna bloccare l'accesso da una rete specifica (es. `192.168.1.0/24`) ma permettere il resto:
+  `sudo iptables -A INPUT -s 192.168.1.0/24 -p tcp --dport 22 -j DROP`
+  *(Attenzione: questa regola di DROP va inserita PRIMA di quella che accetta il traffico SSH da ovunque).*
+* **Salvare le regole (se richiesto il riavvio):** IPTables perde le regole al riavvio a meno che non si installi un pacchetto persistente. Se l'esercizio richiede la persistenza dopo il reboot:
+  `sudo apt install iptables-persistent -y`
+  (Durante l'installazione automatica, per non bloccare lo script con i prompt, usa: `echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections`).
 ```
 ---

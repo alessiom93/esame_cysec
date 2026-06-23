@@ -148,7 +148,7 @@ sudo sed -i 's/CLASS="--class gnu-linux --class gnu --class os"/CLASS="--class g
 sudo update-grub
 ```
 ---
-## 7)
+## 7
 Rendi la cartella /var/log leggibile solo da root
 ```
 #!/bin/bash
